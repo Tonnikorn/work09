@@ -14,6 +14,7 @@
   --accent-hover: #ff3385;
   --border: #f5c6db;
   --th-bg: #ffd6e8;
+  --toast-bg: #fff;
 }
 body.dark {
   --bg: #1e1e2f;
@@ -23,6 +24,7 @@ body.dark {
   --accent-hover: #ff4d94;
   --border: #4a4a60;
   --th-bg: #3b3b54;
+  --toast-bg: #2e2e3f;
 }
 
 body {
@@ -31,6 +33,7 @@ body {
   color: var(--text);
   padding: 20px;
   transition: background 0.3s, color 0.3s;
+  overflow-x: hidden;
 }
 h1 {
   text-align: center;
@@ -106,6 +109,8 @@ th {
   background: var(--th-bg);
   color: var(--accent);
 }
+tr:nth-child(even) { background: rgba(255,255,255,0.4); }
+body.dark tr:nth-child(even) { background: rgba(60,60,80,0.4); }
 
 .location-btns {
   display: flex;
@@ -131,9 +136,10 @@ body.dark .location-btns button {
 }
 #totalDisplay {
   text-align: center;
-  font-size: 1.2em;
+  font-size: 1.1em;
   color: var(--accent);
-  margin-top: 10px;
+  margin-top: 12px;
+  font-weight: 600;
 }
 
 /* ปุ่มลบ */
@@ -229,25 +235,40 @@ body.dark .close-btn { background: #555; color: #eee; }
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   transition: 0.3s;
   font-size: 1.2em;
+  z-index: 300;
 }
 .theme-toggle:hover {
   transform: rotate(20deg) scale(1.1);
   background: var(--accent-hover);
+}
+
+/* Toast Notification */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--toast-bg);
+  color: var(--text);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  padding: 12px 18px;
+  font-weight: 500;
+  display: none;
+  z-index: 500;
 }
 </style>
 </head>
 <body>
 
 <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-
 <h1>🍹 บันทึกยอดขายพาร์ทไทม์💕</h1>
 
 <div class="card">
   <label>จำนวนชั่วโมง:</label>
-  <input id="hours" type="number" placeholder="เช่น 5">
+  <input id="hours" type="number" placeholder="เช่น 5" min="0">
 
   <label>จำนวนแก้ว:</label>
-  <input id="cups" type="number" placeholder="เช่น 60">
+  <input id="cups" type="number" placeholder="เช่น 60" min="0">
 
   <label>เลือกสถานที่:</label>
   <div class="location-btns">
@@ -262,7 +283,7 @@ body.dark .close-btn { background: #555; color: #eee; }
     <button onclick="saveData()">💾 บันทึกข้อมูล</button>
     <button onclick="showTotal()">💰 ดูยอดสะสม</button>
     <button onclick="showSlip()">🧾 สลิปเบิกเงิน</button>
-    <button onclick="resetWeek()">✂️ รีเซ็ตสัปดาห์</button>
+    <button onclick="resetAll()">🧹 เริ่มใหม่ทั้งหมด</button>
   </div>
 </div>
 
@@ -303,60 +324,53 @@ body.dark .close-btn { background: #555; color: #eee; }
   </div>
 </div>
 
-<script>
-const SCRIPT_URL = '[https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec](https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec)';
-let selectedLocation = '';
-let isDark = false;
+<!-- Toast -->
+<div id="toast"></div>
 
-// ฟังก์ชันแสดง/ซ่อน popup โหลด
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec";
+let selectedLocation = '';
+let isDark = localStorage.getItem('theme') === 'dark';
+document.body.classList.toggle('dark', isDark);
+document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+
+// ----- Loading Popup -----
 function showLoading(msg="กำลังทำงาน กรุณารอสักครู่...") {
   document.getElementById('loadingText').textContent = msg;
   document.getElementById('loadingPopup').style.display = 'flex';
 }
-function hideLoading() {
-  document.getElementById('loadingPopup').style.display = 'none';
+function hideLoading() { document.getElementById('loadingPopup').style.display = 'none'; }
+
+// ----- Toast -----
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
 }
 
-// โหมดมืด
+// ----- Theme -----
 function toggleTheme() {
   isDark = !isDark;
   document.body.classList.toggle('dark', isDark);
   document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
-if (localStorage.getItem('theme') === 'dark') {
-  document.body.classList.add('dark');
-  document.querySelector('.theme-toggle').textContent = '☀️';
-  isDark = true;
-}
 
+// ----- Location -----
 function selectLocation(btn, loc) {
   document.querySelectorAll('.location-btns button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedLocation = loc;
 }
 
-// ✅ บันทึกข้อมูล
+// ----- Save Data -----
 async function saveData() {
   const hours = document.getElementById('hours').value.trim();
   const cups = document.getElementById('cups').value.trim();
-  if (!selectedLocation) return alert('กรุณาเลือกสถานที่ก่อนบันทึก');
-  if (!hours || !cups) return alert('กรอกข้อมูลให้ครบก่อนบันทึก');
+  if (!selectedLocation) return showToast('⚠️ กรุณาเลือกสถานที่');
+  if (!hours || !cups) return showToast('⚠️ กรอกข้อมูลให้ครบ');
   showLoading('💾 กำลังบันทึกข้อมูล...');
-
-  const resCheck = await fetch(SCRIPT_URL);
-  const existing = await resCheck.json();
-  const today = new Date().toLocaleDateString('th-TH');
-  const duplicate = existing.find(r => r.date === today && r.location === selectedLocation);
-
-  if (duplicate) {
-    hideLoading();
-    if (confirm(`ข้อมูลวันที่ ${today} (${selectedLocation}) มีอยู่แล้ว ต้องการลบข้อมูลเดิมหรือไม่?`)) {
-      await deleteData(today, selectedLocation);
-      alert('🗑️ ลบข้อมูลเดิมเรียบร้อยแล้ว');
-    } else return;
-    showLoading('💾 กำลังบันทึกข้อมูลใหม่...');
-  }
 
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
@@ -366,22 +380,31 @@ async function saveData() {
   hideLoading();
 
   if (data.status === 'success') {
-    alert('✅ บันทึกเรียบร้อย');
+    showToast('✅ บันทึกสำเร็จ');
     document.getElementById('hours').value = '';
     document.getElementById('cups').value = '';
-    loadTable();
-  } else alert('เกิดข้อผิดพลาด: ' + data.message);
+    loadTable(true);
+  } else showToast('❌ ' + data.message);
 }
 
-async function loadTable() {
+// ----- Load Table -----
+let dataCache = [];
+async function loadTable(force=false) {
+  if (!force && dataCache.length) return renderTable(dataCache);
   showLoading('📊 กำลังโหลดข้อมูล...');
   const res = await fetch(SCRIPT_URL);
-  const result = await res.json();
+  dataCache = await res.json();
   hideLoading();
+  renderTable(dataCache);
+}
+
+function renderTable(result) {
   const tbody = document.querySelector('#dataTable tbody');
   tbody.innerHTML = '';
+  let total = 0;
   result.forEach(r => {
     const row = document.createElement('tr');
+    total += Number(r.total || 0);
     row.innerHTML = `
       <td>${r.date}</td>
       <td>${r.hours}</td>
@@ -394,15 +417,11 @@ async function loadTable() {
     `;
     tbody.appendChild(row);
   });
+  document.getElementById('totalDisplay').innerHTML = `💰 ยอดรวมทั้งหมด: ${total.toLocaleString()} บาท`;
 }
 
-function confirmDelete(date, location) {
-  if (confirm(`แน่ใจหรือไม่ว่าต้องการลบข้อมูลวันที่ ${date} (${location}) ?`)) {
-    deleteData(date, location);
-  }
-}
-
-async function deleteData(date, location) {
+async function confirmDelete(date, location) {
+  if (!confirm(`ลบข้อมูลวันที่ ${date} (${location}) ?`)) return;
   showLoading('🗑️ กำลังลบข้อมูล...');
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
@@ -411,26 +430,18 @@ async function deleteData(date, location) {
   const data = await res.json();
   hideLoading();
   if (data.status === 'deleted') {
-    alert('🗑️ ลบข้อมูลเรียบร้อย');
-    loadTable();
+    showToast('🗑️ ลบข้อมูลแล้ว');
+    loadTable(true);
   }
 }
 
+// ----- Total & Slip -----
 async function showTotal() {
-  showLoading('💰 กำลังคำนวณยอดสะสม...');
-  const res = await fetch(SCRIPT_URL);
-  const result = await res.json();
-  hideLoading();
-  const total = result.reduce((sum, r) => sum + Number(r.total || 0), 0);
-  document.getElementById('totalDisplay').textContent = `💰 ยอดสะสมทั้งหมด: ${total.toLocaleString()} บาท`;
+  const total = dataCache.reduce((sum, r) => sum + Number(r.total || 0), 0);
+  showToast(`💰 ยอดสะสม: ${total.toLocaleString()} บาท`);
 }
-
 async function showSlip() {
-  showLoading('🧾 กำลังสร้างสลิป...');
-  const res = await fetch(SCRIPT_URL);
-  const result = await res.json();
-  hideLoading();
-  const total = result.reduce((sum, r) => sum + Number(r.total || 0), 0);
+  const total = dataCache.reduce((sum, r) => sum + Number(r.total || 0), 0);
   const slipHTML = `
     <p><strong>ชื่อ:</strong> ป๋อมแป๋ม</p>
     <p><strong>วันที่:</strong> ${new Date().toLocaleDateString('th-TH')}</p>
@@ -440,23 +451,22 @@ async function showSlip() {
   document.getElementById('slipDetails').innerHTML = slipHTML;
   document.getElementById('slipPopup').style.display = 'flex';
 }
-function closeSlip() {
-  document.getElementById('slipPopup').style.display = 'none';
-}
+function closeSlip() { document.getElementById('slipPopup').style.display = 'none'; }
 
-async function resetWeek() {
-  if (!confirm('แน่ใจหรือไม่ว่าจะรีเซ็ตข้อมูลสัปดาห์นี้?')) return;
-  showLoading('✂️ กำลังรีเซ็ตข้อมูล...');
+// ----- Reset All -----
+async function resetAll() {
+  if (!confirm('⚠️ ต้องการเริ่มใหม่ทั้งหมดใช่ไหม?')) return;
+  showLoading('🧹 กำลังล้างข้อมูลทั้งหมด...');
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'resetWeek' }),
+    body: JSON.stringify({ action: 'resetAll' }),
   });
   const data = await res.json();
   hideLoading();
-  if (data.status === 'week_reset') {
-    alert('✂️ รีเซ็ตข้อมูลเรียบร้อย');
-    loadTable();
-    document.getElementById('totalDisplay').textContent = '';
+  if (data.status === 'all_reset') {
+    showToast('🧹 ล้างข้อมูลแล้ว');
+    dataCache = [];
+    loadTable(true);
   }
 }
 
