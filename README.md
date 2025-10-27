@@ -304,7 +304,7 @@ body.dark .close-btn { background: #555; color: #eee; }
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec';
+const SCRIPT_URL = '[https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec](https://script.google.com/macros/s/AKfycbxp-D6R3wPq9mlwKnbvBi17_t9Fk0FY5ypURIgwm7PCo1CRKdY1VeSXFNGJAs_iP4VZ4w/exec)';
 let selectedLocation = '';
 let isDark = false;
 
