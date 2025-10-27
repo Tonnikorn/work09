@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>บันทึกยอดขายพาร์ทไทม์</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#a36b40">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root {
