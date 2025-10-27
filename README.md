@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>บันทึกยอดขายพาร์ทไทม์ — ป๋อมแป๋ม</title>
+<title>บันทึกยอดขายพาร์ทไทม์</title>
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -240,7 +240,7 @@ body.dark .close-btn { background: #555; color: #eee; }
 
 <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 
-<h1>🍹 บันทึกยอดขายพาร์ทไทม์ — ป๋อมแป๋ม 💕</h1>
+<h1>🍹 บันทึกยอดขายพาร์ทไทม์💕</h1>
 
 <div class="card">
   <label>จำนวนชั่วโมง:</label>
