@@ -16,25 +16,34 @@
   --th-bg: #ffd6e8;
   --toast-bg: #ff66a3;
 }
+
+/* Body & fonts */
 body { font-family:"Mitr",sans-serif; background: var(--bg); color: var(--text); padding: 20px; transition:0.3s; }
 h1 { text-align:center; color:var(--accent); margin-bottom:20px; font-size:1.9em; animation: bounce 1s infinite alternate; }
-@keyframes bounce {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-5px); }
-}
+@keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-5px); } }
+
+/* Card style */
 .card { background: var(--card); border-radius:22px; padding:20px; max-width:620px; margin:15px auto; box-shadow:0 8px 20px rgba(255,102,163,0.2); transition:0.3s; }
 .card:hover { transform: translateY(-3px); box-shadow:0 12px 25px rgba(255,102,163,0.3); }
+
+/* Form elements */
 label { display:block; margin-top:10px; font-weight:600; }
 input { width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); margin-top:5px; font-size:1em; }
 button { margin:8px 5px; padding:10px 18px; border:none; border-radius:14px; background:var(--accent); color:white; cursor:pointer; transition:0.2s; font-weight:600; }
 button:hover { background: var(--accent-hover); transform:scale(1.08) rotate(-1deg); }
+
+/* Table style */
 table { width:100%; border-collapse:collapse; margin-top:15px; font-size:0.95em; }
 th,td { border:1px solid var(--border); text-align:center; padding:6px; }
 th { background: var(--th-bg); color:var(--accent); }
 tr:nth-child(even){ background:rgba(255,255,255,0.4); }
+
+/* Buttons groups */
 .time-btns, .location-btns{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .time-btns button, .location-btns button{ flex:1 1 30%; background:#ffeaf3; color:#333; font-size:0.9em; border-radius:12px; padding:8px 0; cursor:pointer; transition:0.3s; }
 .time-btns button.active, .location-btns button.active{ background:var(--accent); color:white; transform:scale(1.05); }
+
+/* Loading overlay */
 #loadingOverlay{
   display:none;
   position:fixed;
@@ -55,7 +64,7 @@ tr:nth-child(even){ background:rgba(255,255,255,0.4); }
 }
 @keyframes fadein { from {opacity:0;} to {opacity:1;} }
 
-/* Toast */
+/* Toast popup */
 #toast{
   visibility:hidden;
   min-width:200px;
@@ -136,8 +145,32 @@ tr:nth-child(even){ background:rgba(255,255,255,0.4); }
   <div id="totalDisplay" style="text-align:center; margin-top:12px; font-weight:600; color:var(--accent)"></div>
 </div>
 
+<!-- Overlays & popups -->
 <div id="loadingOverlay">กำลังประมวลผล...</div>
 <div id="toast"></div>
+
+<!-- Slip Modal -->
+<div id="slipModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10002; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:#fff0f6; padding:20px; border-radius:16px; max-width:600px; width:100%; max-height:80vh; overflow-y:auto; position:relative; box-shadow:0 8px 20px rgba(255,102,163,0.3);">
+    <button onclick="closeSlip()" style="position:absolute; top:12px; right:12px; background:var(--accent); color:white; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer;">×</button>
+    <h2 style="text-align:center; color:var(--accent); margin-bottom:12px;">🧾 สลิปเบิกเงิน</h2>
+    <p>ชื่อ: ป๋อมแป๋ม<br>วันที่: <span id="slipDate"></span></p>
+    <table style="width:100%; border-collapse:collapse; text-align:center; font-size:0.9em;">
+      <thead>
+        <tr>
+          <th style="border:1px solid var(--border); padding:6px;">วันที่</th>
+          <th style="border:1px solid var(--border); padding:6px;">สถานที่</th>
+          <th style="border:1px solid var(--border); padding:6px;">ชั่วโมง</th>
+          <th style="border:1px solid var(--border); padding:6px;">Rate</th>
+          <th style="border:1px solid var(--border); padding:6px;">แก้ว</th>
+          <th style="border:1px solid var(--border); padding:6px;">รวม</th>
+        </tr>
+      </thead>
+      <tbody id="slipTableBody"></tbody>
+    </table>
+    <p style="text-align:right; font-weight:600; color:var(--accent); margin-top:10px;">💰 ยอดรวมทั้งหมด: <span id="slipTotal"></span> บาท</p>
+  </div>
+</div>
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrhB-ID8D3bKzOhbkd-eGAJOE8bG_wb75lpoZueGQurqAv5eQ31pC2J7SOR58TbfaOLw/exec';
@@ -256,7 +289,7 @@ async function confirmDelete(date,location){
   }
 }
 
-// Total & Slip
+// Total
 function showTotal(){ 
   showLoading('💰 กำลังคำนวณยอดสะสม...');
   setTimeout(()=>{
@@ -266,16 +299,34 @@ function showTotal(){
   },300);
 }
 
+// Slip modal
 function showSlip(){
-  let slipText = `🧾 สลิปเบิกเงิน\nชื่อ: ป๋อมแป๋ม\nวันที่: ${new Date().toLocaleDateString('th-TH')}\n\n`;
-  slipText += "รายละเอียด:\n";
+  if(!dataCache.length){ showToast('❌ ไม่มีข้อมูลสำหรับสลิป'); return; }
+
+  document.getElementById('slipDate').innerText = new Date().toLocaleDateString('th-TH');
+  const tbody = document.getElementById('slipTableBody');
+  tbody.innerHTML = '';
+
+  let total = 0;
   dataCache.forEach(r=>{
-    slipText+=`${r.date} | ${r.location} | ${r.hours} ชม | rate ${r.rate} | แก้ว ${r.cups} | รวม ${r.total}\n`;
+    total += Number(r.total||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="border:1px solid var(--border); padding:6px;">${r.date}</td>
+      <td style="border:1px solid var(--border); padding:6px;">${r.location}</td>
+      <td style="border:1px solid var(--border); padding:6px;">${r.hours}</td>
+      <td style="border:1px solid var(--border); padding:6px;">${r.rate}</td>
+      <td style="border:1px solid var(--border); padding:6px;">${r.cups}</td>
+      <td style="border:1px solid var(--border); padding:6px;">${r.total}</td>
+    `;
+    tbody.appendChild(tr);
   });
-  const total=dataCache.reduce((sum,r)=>sum+Number(r.total||0),0);
-  slipText += `\n💰 ยอดรวมทั้งหมด: ${total.toLocaleString()} บาท\nขอบคุณสำหรับความตั้งใจในการทำงาน 💕`;
-  showToast('🧾 สลิปสร้างเสร็จแล้ว'); 
-  console.log(slipText); // ส่งไป console แทน alert
+  document.getElementById('slipTotal').innerText = total.toLocaleString();
+  document.getElementById('slipModal').style.display = 'flex';
+}
+
+function closeSlip(){
+  document.getElementById('slipModal').style.display = 'none';
 }
 
 // Reset all
@@ -291,7 +342,9 @@ async function resetAll(){
   }
 }
 
+// Init
 loadTable();
 </script>
+
 </body>
 </html>
